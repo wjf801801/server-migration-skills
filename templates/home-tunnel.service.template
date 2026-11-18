@@ -1,0 +1,24 @@
+[Unit]
+Description=Reverse SSH tunnel to remote VPS anchor (port-forwarding)
+After=network-online.target
+
+[Service]
+# 参数解析:
+# -NT: 不分配 TTY、不执行远程命令
+# ServerAliveInterval=30 / ServerAliveCountMax=3: 保持心跳连接防假死
+# ExitOnForwardFailure=yes: 端口冲突时立即退出，交给 systemd 重试
+# 替换 REMOTE_PORT(如 12251), LOCAL_PORT(如 22), VPS_USER@VPS_HOST, VPS_SSH_PORT
+ExecStart=/usr/bin/ssh -NT \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o ExitOnForwardFailure=yes \
+  -o StrictHostKeyChecking=accept-new \
+  -i %h/.ssh/id_tunnel \
+  -p VPS_SSH_PORT \
+  -R 127.0.0.1:REMOTE_PORT:localhost:LOCAL_PORT \
+  VPS_USER@VPS_HOST
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
